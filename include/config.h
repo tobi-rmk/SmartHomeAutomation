@@ -17,8 +17,8 @@
 // ==================== Rain sensor ====================
 #define RAIN_PIN 35 // Analog pin, input-only
 // LOWER analog value means WETTER (depends on module, must be calibrated via Serial Monitor)
-#define RAIN_WET_THRESHOLD 1800 // Below this -> considered raining
-#define RAIN_DRY_THRESHOLD 2200 // Above this -> considered dry (gap between the two = hysteresis, avoids flicker)
+#define RAIN_WET_THRESHOLD 3200 // Below this -> considered raining
+#define RAIN_DRY_THRESHOLD 3400 // Above this -> considered dry (gap between the two = hysteresis, avoids flicker)
 
 // ==================== PIR (motion detection) ====================
 #define PIR_PIN 27
@@ -48,4 +48,4 @@
 // ==================== Timing ====================
 #define WARMUP_SECONDS 45
 #define SENSOR_READ_INTERVAL_MS 1000 // Read sensors every 1s
-#define DISPLAY_UPDATE_MS 500        // Update LCD every 0.5s
+#define DISPLAY_UPDATE_MS 1000       // Update LCD every 1s

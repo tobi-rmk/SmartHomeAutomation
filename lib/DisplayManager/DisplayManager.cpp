@@ -71,6 +71,7 @@ void DisplayManager::render(float temperature, bool isRaining, int gasValue, boo
         // Line 1: temperature + gas value (short labels, LCD is only 16 columns wide)
         _lcd.print("T:");
         _lcd.print(temperature, 1);
+        _lcd.print((char)223);
         _lcd.print("C G:");
         _lcd.print(gasValue);
         _lcd.print("   ");
@@ -78,7 +79,7 @@ void DisplayManager::render(float temperature, bool isRaining, int gasValue, boo
         // Line 2: rain + light status
         _lcd.setCursor(0, 1);
         _lcd.print("R:");
-        _lcd.print(isRaining ? "Y " : "N ");
+        _lcd.print(isRaining ? "Rain " : "Dry ");
         _lcd.print("L:");
         _lcd.print(isDark ? "Dark  " : "Bright");
     }
