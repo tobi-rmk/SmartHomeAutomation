@@ -72,7 +72,8 @@ void DisplayManager::render(float temperature, bool isRaining, int gasValue, boo
         _lcd.print("T:");
         _lcd.print(temperature, 1);
         _lcd.print((char)223);
-        _lcd.print("C G:");
+        _lcd.setCursor(9, 0);
+        _lcd.print("G:");
         _lcd.print(gasValue);
         _lcd.print("   ");
 
