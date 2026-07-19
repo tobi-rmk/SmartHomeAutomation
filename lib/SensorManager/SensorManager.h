@@ -17,8 +17,10 @@ public:
     float getHumidity() const { return _humidity; }
     int getGasValue() const { return _gasValue; }
     bool isRaining() const { return _isRaining; }
+    int getRainRawValue() const { return _rainRaw; }
     bool isMotionDetected() const { return _motionDetected; }
     int getLightLevel() const { return _lightLevel; }
+    bool isDark() const { return _isDark; }
 
 private:
     DHT _dht;
@@ -27,6 +29,8 @@ private:
     float _humidity = 0;
     int _gasValue = 0;
     bool _isRaining = false;
+    int _rainRaw = 0;
     bool _motionDetected = false;
     int _lightLevel = 0;
+    bool _isDark = false;
 };

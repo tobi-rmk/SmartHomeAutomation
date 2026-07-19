@@ -17,13 +17,18 @@
 // ==================== Rain sensor ====================
 #define RAIN_PIN 35 // Analog pin, input-only
 // LOWER analog value means WETTER (depends on module, must be calibrated via Serial Monitor)
-#define RAIN_THRESHOLD 2000
+#define RAIN_WET_THRESHOLD 1800 // Below this -> considered raining
+#define RAIN_DRY_THRESHOLD 2200 // Above this -> considered dry (gap between the two = hysteresis, avoids flicker)
 
 // ==================== PIR (motion detection) ====================
 #define PIR_PIN 27
 
 // ==================== LDR (light level) ====================
 #define LDR_PIN 36 // Analog pin, input-only (VP)
+// TODO: calibrate direction via Serial Monitor - some modules read HIGHER when darker, others LOWER.
+// Values below assume HIGHER raw value = darker; flip the comparison in SensorManager if yours is inverted.
+#define LIGHT_DARK_THRESHOLD 3000   // Above this -> considered dark
+#define LIGHT_BRIGHT_THRESHOLD 2500 // Below this -> considered bright (gap = hysteresis, avoids flicker)
 
 // ==================== Servos ====================
 #define ROOF_SERVO_PIN 13 // Roof/awning servo
@@ -32,7 +37,7 @@
 // ==================== Buzzer / LED / Fan ====================
 #define BUZZER_PIN 25
 #define LED_ROOM_PIN 26  // Room light, auto/manual control
-#define LED_ALERT_PIN 33 // Alert door light
+#define LED_ALERT_PIN 33 // Alert light (e.g. gas alert)
 #define FAN_RELAY_PIN 32 // Controls the fan via relay/transistor
 
 // ==================== RFID RC522 (SPI) ====================
@@ -41,6 +46,6 @@
 #define RFID_RST_PIN 15
 
 // ==================== Timing ====================
-#define WARMUP_SECONDS 20
-#define SENSOR_READ_INTERVAL_MS 2000 // Read sensors every 2s
-#define DISPLAY_UPDATE_MS 1000       // Update LCD every 1s
+#define WARMUP_SECONDS 45
+#define SENSOR_READ_INTERVAL_MS 1000 // Read sensors every 1s
+#define DISPLAY_UPDATE_MS 500        // Update LCD every 0.5s
