@@ -47,19 +47,18 @@
 
 // ==================== Button ====================
 
-#define BTN1_PIN 16
-#define BTN2_PIN 17
-#define BTN3_PIN 2
-#define BTN4_PIN 12
+#define BTN_ROOF_PIN 16
+#define BTN_DOOR_PIN 17
+#define BTN_FAN_PIN 12
 
 // ==================== Servo angles ====================
-#define ROOF_CLOSED_ANGLE 0
-#define ROOF_OPEN_ANGLE 90
-#define DOOR_CLOSED_ANGLE 0
-#define DOOR_OPEN_ANGLE 90
+#define ROOF_CLOSED_ANGLE 90
+#define ROOF_OPEN_ANGLE 0
+#define DOOR_CLOSED_ANGLE 90
+#define DOOR_OPEN_ANGLE 0
 
 // ==================== Timing ====================
-#define WARMUP_SECONDS 45
+#define WARMUP_SECONDS 60
 #define SENSOR_READ_INTERVAL_MS 1000 // Read sensors every 1s
 #define DISPLAY_UPDATE_MS 1000       // Update LCD every 1s
 #define DEBOUNCE_DELAY_MS 50         // Button
