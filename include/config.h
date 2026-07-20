@@ -36,6 +36,7 @@
 
 // ==================== Buzzer / LED / Fan ====================
 #define BUZZER_PIN 25
+
 #define LED_ROOM_PIN 26  // Room light, auto/manual control
 #define LED_ALERT_PIN 33 // Alert light (e.g. gas alert)
 #define FAN_RELAY_PIN 32 // Controls the fan via relay/transistor
@@ -44,6 +45,10 @@
 // SCK=18, MISO=19, MOSI=23 are ESP32's default SPI pins, no need to define separately
 #define RFID_SS_PIN 5
 #define RFID_RST_PIN 15
+
+// ==================== RFID authorized card ====================
+// Điền UID thẻ hợp lệ sau khi quét bằng code test (ví dụ: {0xDE, 0xAD, 0xBE, 0xEF})
+#define AUTHORIZED_UID_LENGTH 4
 
 // ==================== Button ====================
 
