@@ -16,9 +16,11 @@ void setup()
 
     actuators.setBuzzer(true);
     actuators.setAlertLed(true);
-    delay(300);
+    actuators.setRoomLed(true);
+    delay(3000);
     actuators.setBuzzer(false);
     actuators.setAlertLed(false);
+    actuators.setRoomLed(false);
 }
 
 void loop()
