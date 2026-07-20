@@ -1,0 +1,2 @@
+RC522 : GND và VCC nối thẳng vô ESP32 (main)
+Servo (2 cái), Relay: Xài nguồn 5V ngoài
