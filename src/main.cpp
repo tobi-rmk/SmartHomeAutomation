@@ -1,10 +1,12 @@
 #include <Arduino.h>
 #include "config.h"
+#include "secrets.h"
 #include "SensorManager.h"
 #include "ActuatorManager.h"
 #include "ButtonManager.h"
 #include "DisplayManager.h"
 #include "RFIDManager.h"
+#include "blynk_manager.h"
 #include "HomeController.h"
 
 SensorManager sensors;
@@ -32,6 +34,9 @@ void setup()
     rfid.setAuthorizedUID(authorizedUID, sizeof(authorizedUID));
 
     display.runWarmup();
+
+    // Blynk connects AFTER the warmup so the LCD countdown isn't delayed by a slow WiFi handshake
+    blynkManager.begin();
 }
 
 void loop()
@@ -39,6 +44,7 @@ void loop()
     unsigned long now = millis();
 
     buttons.update();
+    blynkManager.run();
 
     if (now - lastSensorRead >= SENSOR_READ_INTERVAL_MS)
     {
@@ -46,9 +52,9 @@ void loop()
         sensors.update();
     }
 
-    // HomeController reads current sensor/button/RFID state every loop and drives
-    // all 6 automation rules (roof, door/RFID, fan, gas alarm, light) + resolves the buzzer.
-    home.update(sensors, actuators, buttons, rfid);
+    // HomeController reads current sensor/button/RFID/Blynk state every loop and drives
+    // all 6 automation rules + syncs the dashboard + fires the 2 alert events.
+    home.update(sensors, actuators, buttons, rfid, blynkManager);
 
     // DisplayManager throttles itself internally (DISPLAY_UPDATE_MS) - safe to call every loop
     display.update(sensors.getTemperature(), sensors.isRaining(), sensors.getGasValue(), sensors.isDark());

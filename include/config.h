@@ -63,8 +63,8 @@
 #define DOOR_OPEN_ANGLE 0
 
 // ==================== Fan temperature thresholds ====================
-#define FAN_TEMP_ON_THRESHOLD 33  // Above this + motion detected -> fan on
-#define FAN_TEMP_OFF_THRESHOLD 30 // Below this -> fan off (regardless of motion)
+#define FAN_TEMP_ON_THRESHOLD 30  // Above this + motion detected -> fan on
+#define FAN_TEMP_OFF_THRESHOLD 28 // Below this -> fan off (regardless of motion)
 
 // ==================== HomeController timing ====================
 #define LIGHT_MOTION_HOLD_MS 15000        // Keep light on this long after the last motion, while still dark
@@ -72,8 +72,11 @@
 #define WRONG_CARD_ATTEMPTS_LIMIT 3       // Number of consecutive wrong scans before the alarm triggers
 #define GAS_DOOR_AUTO_CLOSE_DELAY_MS 5000 // Auto-close the door this long after gas returns to normal
 
+// ==================== Blynk ====================
+#define BLYNK_SENSOR_PUSH_MS 2000 // How often to push Temp/Gas values to the dashboard
+
 // ==================== Timing ====================
-#define WARMUP_SECONDS 60
+#define WARMUP_SECONDS 30
 #define SENSOR_READ_INTERVAL_MS 1000 // Read sensors every 1s
 #define DISPLAY_UPDATE_MS 1000       // Update LCD every 1s
 #define DEBOUNCE_DELAY_MS 50         // Button

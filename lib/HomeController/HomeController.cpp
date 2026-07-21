@@ -8,55 +8,80 @@ void HomeController::begin()
 }
 
 void HomeController::update(SensorManager &sensors, ActuatorManager &actuators,
-                            ButtonManager &buttons, RFIDManager &rfid)
+                            ButtonManager &buttons, RFIDManager &rfid, BlynkManager &blynk)
 {
-    handleRoof(sensors, actuators, buttons);
-    handleDoorAndRFID(sensors, actuators, buttons, rfid);
-    handleFan(sensors, actuators, buttons);
+    handleRoof(sensors, actuators, buttons, blynk);
+    handleDoorAndRFID(sensors, actuators, buttons, rfid, blynk);
+    handleFan(sensors, actuators, buttons, blynk);
     handleGasAlarm(sensors, actuators);
     handleGasDoorAutoClose(actuators);
     handleLight(sensors, actuators);
     resolveAlarmOutputs(actuators);
+    updateBlynk(sensors, blynk);
 }
 
-// ==================== Logic 2: Rain -> roof, button overrides ====================
-void HomeController::handleRoof(SensorManager &sensors, ActuatorManager &actuators, ButtonManager &buttons)
+// ==================== Logic 2: Rain -> roof, button/app overrides ====================
+void HomeController::handleRoof(SensorManager &sensors, ActuatorManager &actuators,
+                                ButtonManager &buttons, BlynkManager &blynk)
 {
     bool raining = sensors.isRaining();
+    bool changed = false;
 
     if (raining && !_wasRaining)
     {
         // Rain just started -> open/extend the roof to cover
         actuators.setRoofOpen(true);
+        changed = true;
         Serial.println("[Auto] Rain started -> roof opened (covering)");
     }
     else if (!raining && _wasRaining)
     {
         // Rain just stopped -> close/retract the roof
         actuators.setRoofOpen(false);
+        changed = true;
         Serial.println("[Auto] Rain stopped -> roof closed (retracted)");
     }
     _wasRaining = raining;
 
-    // Manual override: always allowed, independent of the automatic rule above.
-    // It only gets overwritten again on the NEXT rain edge, not on every loop.
+    // Manual override from the physical button: always allowed, independent of the
+    // automatic rule above. Only gets overwritten again on the NEXT rain edge.
     if (buttons.wasRoofPressed())
     {
         actuators.setRoofOpen(!actuators.isRoofOpen());
+        changed = true;
         Serial.print("[Button] Roof -> ");
         Serial.println(actuators.isRoofOpen() ? "OPEN" : "CLOSED");
     }
+
+    // Manual override from the Blynk app switch - same treatment, just sets the
+    // exact requested state instead of toggling.
+    bool appValue;
+    if (blynk.consumeRoofCommand(appValue))
+    {
+        actuators.setRoofOpen(appValue);
+        changed = true;
+        Serial.print("[Blynk] Roof -> ");
+        Serial.println(actuators.isRoofOpen() ? "OPEN" : "CLOSED");
+    }
+
+    // Push the (possibly new) state back to the dashboard so the switch widget
+    // reflects reality regardless of which source changed it.
+    if (changed)
+        blynk.syncRoof(actuators.isRoofOpen());
 }
 
 // ==================== Logic 3 + 5: RFID / door / wrong-card beep ====================
 void HomeController::handleDoorAndRFID(SensorManager &sensors, ActuatorManager &actuators,
-                                       ButtonManager &buttons, RFIDManager &rfid)
+                                       ButtonManager &buttons, RFIDManager &rfid, BlynkManager &blynk)
 {
+    bool changed = false;
+
     if (rfid.update())
     {
         if (rfid.isLastCardAuthorized())
         {
             actuators.setDoorOpen(true);
+            changed = true;
             _gasDoorCloseScheduled = false; // cancel any pending gas auto-close - door just opened legitimately
             _wrongCardCount = 0;            // a successful scan resets the wrong-attempt counter
             Serial.print("[RFID] Authorized card ");
@@ -94,19 +119,39 @@ void HomeController::handleDoorAndRFID(SensorManager &sensors, ActuatorManager &
     if (buttons.wasDoorPressed())
     {
         actuators.setDoorOpen(!actuators.isDoorOpen());
+        changed = true;
         _gasDoorCloseScheduled = false; // manual action always cancels the pending auto-close
         Serial.print("[Button] Door -> ");
         Serial.println(actuators.isDoorOpen() ? "OPEN" : "CLOSED");
     }
+
+    // Manual override from the Blynk app switch
+    bool appValue;
+    if (blynk.consumeDoorCommand(appValue))
+    {
+        actuators.setDoorOpen(appValue);
+        changed = true;
+        _gasDoorCloseScheduled = false;
+        Serial.print("[Blynk] Door -> ");
+        Serial.println(actuators.isDoorOpen() ? "OPEN" : "CLOSED");
+    }
+
+    if (changed)
+        blynk.syncDoor(actuators.isDoorOpen());
+
+    // door_alert event: fires once when the 3-wrong-attempt alarm activates
+    blynk.notifyDoorAlert(_wrongCardBeepActive);
 }
 
-// ==================== Logic 4: Temperature -> fan, button overrides ====================
-void HomeController::handleFan(SensorManager &sensors, ActuatorManager &actuators, ButtonManager &buttons)
+// ==================== Logic 4: Temperature -> fan, button/app overrides ====================
+void HomeController::handleFan(SensorManager &sensors, ActuatorManager &actuators,
+                               ButtonManager &buttons, BlynkManager &blynk)
 {
     float temp = sensors.getTemperature();
+    bool changed = false;
 
     // shouldBeOn tracks ONLY the temperature condition. It is never influenced
-    // by what the actuator/button did - this is what stops it from getting "stuck" after
+    // by what the actuator/button/app did - this is what stops it from getting "stuck" after
     // a manual override happens while the condition was already true.
     bool shouldBeOn = _tempAboveThreshold;
     if (!shouldBeOn && temp > FAN_TEMP_ON_THRESHOLD)
@@ -122,17 +167,30 @@ void HomeController::handleFan(SensorManager &sensors, ActuatorManager &actuator
     {
         _tempAboveThreshold = shouldBeOn;
         actuators.setFan(shouldBeOn);
+        changed = true;
         Serial.println(shouldBeOn ? "[Auto] Temp above threshold -> fan on" : "[Auto] Cooled down -> fan off");
     }
 
-    // Manual override: always allowed, and does NOT touch _tempAboveThreshold at all.
-    // It only gets re-asserted by the automatic rule above on the NEXT real condition edge.
+    // Manual override: always allowed, does NOT touch _tempAboveThreshold at all.
     if (buttons.wasFanPressed())
     {
         actuators.setFan(!actuators.isFanOn());
+        changed = true;
         Serial.print("[Button] Fan -> ");
         Serial.println(actuators.isFanOn() ? "ON" : "OFF");
     }
+
+    bool appValue;
+    if (blynk.consumeFanCommand(appValue))
+    {
+        actuators.setFan(appValue);
+        changed = true;
+        Serial.print("[Blynk] Fan -> ");
+        Serial.println(actuators.isFanOn() ? "ON" : "OFF");
+    }
+
+    if (changed)
+        blynk.syncFan(actuators.isFanOn());
 }
 
 // ==================== Logic 5: Gas -> buzzer + auto-open door ====================
@@ -205,4 +263,11 @@ void HomeController::resolveAlarmOutputs(ActuatorManager &actuators)
     {
         actuators.setAlertLed(shouldAlarm);
     }
+}
+
+// ==================== Push Temp/Gas + gas_alert event to Blynk ====================
+void HomeController::updateBlynk(SensorManager &sensors, BlynkManager &blynk)
+{
+    blynk.updateSensors(sensors.getTemperature(), sensors.getGasValue());
+    blynk.notifyGasAlert(_gasAlarmActive);
 }
