@@ -76,7 +76,7 @@
 #define BLYNK_SENSOR_PUSH_MS 2000 // How often to push Temp/Gas values to the dashboard
 
 // ==================== Timing ====================
-#define WARMUP_SECONDS 30
+#define WARMUP_SECONDS 20
 #define SENSOR_READ_INTERVAL_MS 1000 // Read sensors every 1s
 #define DISPLAY_UPDATE_MS 1000       // Update LCD every 1s
 #define DEBOUNCE_DELAY_MS 50         // Button

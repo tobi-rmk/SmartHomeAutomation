@@ -84,6 +84,7 @@ void HomeController::handleDoorAndRFID(SensorManager &sensors, ActuatorManager &
             changed = true;
             _gasDoorCloseScheduled = false; // cancel any pending gas auto-close - door just opened legitimately
             _wrongCardCount = 0;            // a successful scan resets the wrong-attempt counter
+            startBeep(1, 150, 0);           // single short chirp = success
             Serial.print("[RFID] Authorized card ");
             Serial.print(rfid.getLastUID());
             Serial.println(" -> door opened");
@@ -91,6 +92,7 @@ void HomeController::handleDoorAndRFID(SensorManager &sensors, ActuatorManager &
         else
         {
             _wrongCardCount++;
+            startBeep(2, 80, 80); // double quick chirp = wrong card (not yet at the alarm limit)
             Serial.print("[RFID] DENIED card ");
             Serial.print(rfid.getLastUID());
             Serial.print(" (attempt ");
@@ -250,19 +252,51 @@ void HomeController::handleLight(SensorManager &sensors, ActuatorManager &actuat
     // else: still within the hold window - leave the light as-is (on)
 }
 
-// ==================== Alarm outputs resolver: gas alarm OR wrong-card beep ====================
+// ==================== Alarm outputs resolver: gas alarm OR wrong-card alarm OR transient beep ====================
 void HomeController::resolveAlarmOutputs(ActuatorManager &actuators)
 {
-    bool shouldAlarm = _gasAlarmActive || _wrongCardBeepActive;
+    bool realAlarm = _gasAlarmActive || _wrongCardBeepActive;
+    bool buzzerOn = realAlarm || isBeepCurrentlyOn();
 
-    if (shouldAlarm != actuators.isBuzzerOn())
+    if (buzzerOn != actuators.isBuzzerOn())
     {
-        actuators.setBuzzer(shouldAlarm);
+        actuators.setBuzzer(buzzerOn);
     }
-    if (shouldAlarm != actuators.isAlertLedOn())
+    // Alert LED only reflects a REAL alarm (gas/3-strike) - not routine success/error chirps,
+    // otherwise the alert LED would flash on every single successful door scan.
+    if (realAlarm != actuators.isAlertLedOn())
     {
-        actuators.setAlertLed(shouldAlarm);
+        actuators.setAlertLed(realAlarm);
     }
+}
+
+// ==================== Non-blocking beep pattern player ====================
+void HomeController::startBeep(int count, unsigned long onMs, unsigned long offMs)
+{
+    _beepActive = true;
+    _beepStartedAt = millis();
+    _beepCount = count;
+    _beepOnMs = onMs;
+    _beepOffMs = offMs;
+}
+
+bool HomeController::isBeepCurrentlyOn()
+{
+    if (!_beepActive)
+        return false;
+
+    unsigned long elapsed = millis() - _beepStartedAt;
+    unsigned long cycle = _beepOnMs + _beepOffMs;
+    unsigned long totalDuration = (unsigned long)_beepCount * cycle;
+
+    if (elapsed >= totalDuration)
+    {
+        _beepActive = false; // pattern finished
+        return false;
+    }
+
+    unsigned long posInCycle = elapsed % cycle;
+    return posInCycle < _beepOnMs;
 }
 
 // ==================== Push Temp/Gas + gas_alert event to Blynk ====================

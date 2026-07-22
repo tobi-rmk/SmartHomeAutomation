@@ -48,9 +48,15 @@ private:
     // the instant the person stops moving. No manual override (per project decision).
     void handleLight(SensorManager &sensors, ActuatorManager &actuators);
 
-    // Buzzer AND alert LED share the same two triggers (gas alarm + wrong RFID card) -
-    // resolved once per loop as a simple OR of both sources, so they never fight each other.
+    // Buzzer AND alert LED share the same two alarm triggers (gas alarm + wrong-card 3-strike) -
+    // resolved once per loop. The alert LED only reflects real alarms; routine beep feedback
+    // (success/error chirps) only drives the buzzer, not the LED.
     void resolveAlarmOutputs(ActuatorManager &actuators);
+
+    // Non-blocking beep pattern player: N short beeps of onMs/offMs, used for RFID
+    // success/error feedback. Call startBeep() once, isBeepCurrentlyOn() every loop.
+    void startBeep(int count, unsigned long onMs, unsigned long offMs);
+    bool isBeepCurrentlyOn();
 
     // Pushes Temp/Gas values + the 2 Blynk events every loop (each throttles/edge-detects itself).
     void updateBlynk(SensorManager &sensors, BlynkManager &blynk);
@@ -75,4 +81,11 @@ private:
 
     // ---- Light (Logic 6) ----
     unsigned long _lastMotionWhileDark = 0;
+
+    // ---- Transient beep pattern (RFID success/error feedback) ----
+    bool _beepActive = false;
+    unsigned long _beepStartedAt = 0;
+    int _beepCount = 0;
+    unsigned long _beepOnMs = 0;
+    unsigned long _beepOffMs = 0;
 };
