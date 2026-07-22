@@ -33,7 +33,7 @@ private:
     void handleDoorAndRFID(SensorManager &sensors, ActuatorManager &actuators,
                            ButtonManager &buttons, RFIDManager &rfid, BlynkManager &blynk);
 
-    // Logic 4: temperature -> fan (edge-triggered automation, button/app always free to override)
+    // Logic 4: temperature + motion -> fan (edge-triggered automation, button/app always free to override)
     void handleFan(SensorManager &sensors, ActuatorManager &actuators,
                    ButtonManager &buttons, BlynkManager &blynk);
 
@@ -65,9 +65,13 @@ private:
     bool _wasRaining = false;
 
     // ---- Fan (Logic 4) ----
-    // Tracks the *temperature condition* only, never touched by button presses -
-    // this is what makes edge-detection immune to manual overrides changing the actual fan state.
+    // "hot" tracks ONLY the temperature condition (hysteresis, immune to button/app state).
+    // "_fanAutoOn" tracks what the automation currently believes the fan state should be
+    // (hot AND recent motion) - only THIS drives actuator calls, on its own edges,
+    // so manual overrides never get silently overwritten mid-band.
     bool _tempAboveThreshold = false;
+    bool _fanAutoOn = false;
+    unsigned long _lastMotionWhileHot = 0;
 
     // ---- Gas alarm (Logic 5) ----
     bool _gasAlarmActive = false;

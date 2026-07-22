@@ -16,7 +16,7 @@ void BlynkManager::run()
     Blynk.run();
 }
 
-void BlynkManager::updateSensors(float temperature, int gasValue)
+void BlynkManager::updateSensors(float temperature, int gasValue, bool motionDetected, bool isRaining)
 {
     unsigned long now = millis();
     if (now - _lastSensorPush < BLYNK_SENSOR_PUSH_MS)
@@ -25,6 +25,8 @@ void BlynkManager::updateSensors(float temperature, int gasValue)
 
     Blynk.virtualWrite(VPIN_TEMP, temperature);
     Blynk.virtualWrite(VPIN_GAS, gasValue);
+    Blynk.virtualWrite(VPIN_MOTION, motionDetected ? 1 : 0); // LED widget: 1 = on, 0 = off
+    Blynk.virtualWrite(VPIN_RAIN, isRaining ? 1 : 0);        // LED widget: 1 = on, 0 = off
 }
 
 void BlynkManager::syncFan(bool on) { Blynk.virtualWrite(VPIN_FAN, on ? 1 : 0); }

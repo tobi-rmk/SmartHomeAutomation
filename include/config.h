@@ -67,16 +67,17 @@
 #define FAN_TEMP_OFF_THRESHOLD 28 // Below this -> fan off (regardless of motion)
 
 // ==================== HomeController timing ====================
-#define LIGHT_MOTION_HOLD_MS 15000        // Keep light on this long after the last motion, while still dark
+#define LIGHT_MOTION_HOLD_MS 5000         // Keep light on this long after the last motion, while still dark
+#define FAN_MOTION_HOLD_MS 5000           // Keep fan on this long after the last motion, while still hot
 #define WRONG_CARD_BEEP_MS 1500           // Buzzer pulse duration for an unauthorized RFID card
 #define WRONG_CARD_ATTEMPTS_LIMIT 3       // Number of consecutive wrong scans before the alarm triggers
-#define GAS_DOOR_AUTO_CLOSE_DELAY_MS 5000 // Auto-close the door this long after gas returns to normal
+#define GAS_DOOR_AUTO_CLOSE_DELAY_MS 3000 // Auto-close the door this long after gas returns to normal
 
 // ==================== Blynk ====================
 #define BLYNK_SENSOR_PUSH_MS 2000 // How often to push Temp/Gas values to the dashboard
 
 // ==================== Timing ====================
-#define WARMUP_SECONDS 20
+#define WARMUP_SECONDS 30
 #define SENSOR_READ_INTERVAL_MS 1000 // Read sensors every 1s
 #define DISPLAY_UPDATE_MS 1000       // Update LCD every 1s
 #define DEBOUNCE_DELAY_MS 50         // Button

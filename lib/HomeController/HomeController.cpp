@@ -145,35 +145,46 @@ void HomeController::handleDoorAndRFID(SensorManager &sensors, ActuatorManager &
     blynk.notifyDoorAlert(_wrongCardBeepActive);
 }
 
-// ==================== Logic 4: Temperature -> fan, button/app overrides ====================
+// ==================== Logic 4: Temperature + motion -> fan, button/app overrides ====================
 void HomeController::handleFan(SensorManager &sensors, ActuatorManager &actuators,
                                ButtonManager &buttons, BlynkManager &blynk)
 {
     float temp = sensors.getTemperature();
     bool changed = false;
 
-    // shouldBeOn tracks ONLY the temperature condition. It is never influenced
-    // by what the actuator/button/app did - this is what stops it from getting "stuck" after
-    // a manual override happens while the condition was already true.
-    bool shouldBeOn = _tempAboveThreshold;
-    if (!shouldBeOn && temp > FAN_TEMP_ON_THRESHOLD)
+    // "hot" tracks ONLY the temperature condition (hysteresis), independent of motion/actuator/button.
+    bool hot = _tempAboveThreshold;
+    if (!hot && temp > FAN_TEMP_ON_THRESHOLD)
     {
-        shouldBeOn = true;
+        hot = true;
     }
-    else if (shouldBeOn && temp < FAN_TEMP_OFF_THRESHOLD)
+    else if (hot && temp < FAN_TEMP_OFF_THRESHOLD)
     {
-        shouldBeOn = false;
+        hot = false;
+    }
+    _tempAboveThreshold = hot;
+
+    if (sensors.isMotionDetected())
+    {
+        _lastMotionWhileHot = millis();
     }
 
-    if (shouldBeOn != _tempAboveThreshold)
+    // Fan should spin only when hot AND (motion right now OR within the hold window since
+    // the last motion) - exactly the same pattern as the light's hold timer.
+    bool desiredAutoOn = hot && (sensors.isMotionDetected() ||
+                                 (millis() - _lastMotionWhileHot <= FAN_MOTION_HOLD_MS));
+
+    // Edge-triggered: only touch the actuator when the AUTOMATIC decision itself changes,
+    // never every loop - this is what keeps manual overrides from being silently overwritten.
+    if (desiredAutoOn != _fanAutoOn)
     {
-        _tempAboveThreshold = shouldBeOn;
-        actuators.setFan(shouldBeOn);
+        _fanAutoOn = desiredAutoOn;
+        actuators.setFan(desiredAutoOn);
         changed = true;
-        Serial.println(shouldBeOn ? "[Auto] Temp above threshold -> fan on" : "[Auto] Cooled down -> fan off");
+        Serial.println(desiredAutoOn ? "[Auto] Hot + motion -> fan on" : "[Auto] Cooled down or no motion -> fan off");
     }
 
-    // Manual override: always allowed, does NOT touch _tempAboveThreshold at all.
+    // Manual override: always allowed, does NOT touch _fanAutoOn at all.
     if (buttons.wasFanPressed())
     {
         actuators.setFan(!actuators.isFanOn());
@@ -299,9 +310,10 @@ bool HomeController::isBeepCurrentlyOn()
     return posInCycle < _beepOnMs;
 }
 
-// ==================== Push Temp/Gas + gas_alert event to Blynk ====================
+// ==================== Push Temp/Gas/Motion/Rain + gas_alert event to Blynk ====================
 void HomeController::updateBlynk(SensorManager &sensors, BlynkManager &blynk)
 {
-    blynk.updateSensors(sensors.getTemperature(), sensors.getGasValue());
+    blynk.updateSensors(sensors.getTemperature(), sensors.getGasValue(),
+                        sensors.isMotionDetected(), sensors.isRaining());
     blynk.notifyGasAlert(_gasAlarmActive);
 }

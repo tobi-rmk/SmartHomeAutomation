@@ -3,19 +3,23 @@
 // Template info from your Blynk.Console project. This block (together with
 // BLYNK_AUTH_TOKEN from secrets.h) MUST be defined before <BlynkSimpleEsp32.h> is
 // included anywhere - blynk_manager.cpp is the only file that includes that header.
-#define BLYNK_TEMPLATE_ID "TMPL6_Jd8ONNt"
-#define BLYNK_TEMPLATE_NAME "FinalSmartHome"
+#define BLYNK_TEMPLATE_ID "TMPL6Dvulun_u"
+#define BLYNK_TEMPLATE_NAME "FinalSmartHome2"
 
 #include <Arduino.h>
 
 // Virtual pin map - must match the datastreams configured in your Blynk template:
-//   V0 Temp  (value, read-only)      V1 Gas   (value, read-only)
-//   V2 Fan   (switch, two-way sync)  V3 Door  (switch, two-way sync)  V4 Roof (switch, two-way sync)
+//   V0 Temp   (value, read-only)     V1 Gas   (value, read-only)
+//   V2 Fan    (switch, two-way sync) V3 Door  (switch, two-way sync)  V4 Roof (switch, two-way sync)
+//   V5 Motion (value, read-only, drives an LED widget - 1 = motion, 0 = no motion)
+//   V6 Rain   (value, read-only, drives an LED widget - 1 = raining, 0 = dry)
 #define VPIN_TEMP V0
 #define VPIN_GAS V1
 #define VPIN_FAN V2
 #define VPIN_DOOR V3
 #define VPIN_ROOF V4
+#define VPIN_MOTION V5
+#define VPIN_RAIN V6
 
 // Owns the Blynk connection.
 //  - Pushes Temp/Gas values to the dashboard (throttled).
@@ -29,7 +33,7 @@ public:
     void begin();
     void run(); // call every loop()
 
-    void updateSensors(float temperature, int gasValue);
+    void updateSensors(float temperature, int gasValue, bool motionDetected, bool isRaining);
 
     void syncFan(bool on);
     void syncDoor(bool on);
